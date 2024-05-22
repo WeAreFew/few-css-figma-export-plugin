@@ -1,8 +1,10 @@
 <h2>Few CSS Variable Exporter</h2>
 <button id="create">Create CSS</button>
 
-<section class="output">
+<section class="section-code-output">
+  <pre class="code-block">
   <code id="codeOut"></code>
+  </pre>
 </section>
 
 <style>
@@ -34,6 +36,17 @@
     background-color: var(--color-brand);
     color: var(--color-white);
     padding: 8px 16px;
+  }
+
+  .section-code-output {
+    margin-top: 2rem;
+  }
+  .code-block {
+    background-color: #f8f8f8;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow: auto;
+    min-height: 200px;
   }
 </style>
 <script>
