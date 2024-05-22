@@ -5,6 +5,8 @@
 // the *figma document* via the figma global object.
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
+const FONT_BASE_SIZE: number = 16;
+
 type StyleCollection = {
   id: string;
   name: string;
@@ -77,6 +79,12 @@ function resolveVarAlias(
   return `var(${cssPropertyName})`;
 }
 
+function parseNumberValue(value: VariableValue): string {
+  const valueNum = value as number;
+  const remValue = valueNum / FONT_BASE_SIZE;
+  return remValue.toFixed(2) + "rem";
+}
+
 function parseVariableValue(
   variable: Variable,
   modeName: string | undefined,
@@ -105,6 +113,9 @@ function parseVariableValue(
     const color = value as RGBA;
     const hexColor = rgbaToHex(color.r, color.g, color.b, color.a);
     parsedValue = hexColor;
+  } else if (typeof value === "number") {
+    // Number
+    parsedValue = parseNumberValue(value);
   } else {
     parsedValue = value.toString();
   }
