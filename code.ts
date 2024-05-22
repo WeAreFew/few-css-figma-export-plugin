@@ -5,7 +5,6 @@
 // the *figma document* via the figma global object.
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
-
 type StyleCollection = {
   id: string;
   name: string;
@@ -26,11 +25,24 @@ type StyleVariable = {
   values: Array<StyleVarValue>;
 };
 
+function rgbaToHex(r: number, g: number, b: number, a: number) {
+  return (
+    "#" +
+    [r, g, b, a]
+      .map((x) => {
+        const hex = Math.round(x * 255).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+      .toUpperCase()
+  );
+}
+
 function toCSSString(vars: Array<StyleVariable>) {
   let css = ":root {\n";
   for (const variable of vars) {
     let valueString = "";
-    console.log("toCSSString Variable:", variable);
+    // console.log("toCSSString Variable:", variable);
     if (variable.values?.length > 0) {
       const modeValue = variable.values[0];
       valueString = modeValue.value;
@@ -50,13 +62,6 @@ console.clear();
 
 function findVariableById(id: string, variables: Array<Variable>) {
   return variables.find((variable) => variable.id === id);
-}
-
-function findCollectionById(
-  id: string,
-  collections: Array<VariableCollection>
-) {
-  return collections.find((collection) => collection.id === id);
 }
 
 function resolveVarAlias(
@@ -95,6 +100,13 @@ function parseVariableValue(
     // Fetch the alias value
     const resolvedValue = resolveVarAlias(value, allVariables);
     parsedValue = resolvedValue;
+  } else if (value instanceof Object && variable.resolvedType === "COLOR") {
+    // Color
+    const color = value as RGBA;
+    const hexColor = rgbaToHex(color.r, color.g, color.b, color.a);
+    parsedValue = hexColor;
+  } else {
+    parsedValue = value.toString();
   }
 
   return parsedValue;
@@ -132,23 +144,23 @@ async function generateCSS() {
     );
 
     const modes = varCollection?.data.modes;
-    console.log("Num Modes:", modes?.length);
-    if (modes?.length > 1) {
+    console.log("Num Modes:", modes?.length ?? 0);
+    if ((modes?.length ?? 0) > 1) {
       console.error("Multiple Modes not supported yet!");
     }
+
+    console.log("generateCSS valuesbyMode:", variable.valuesByMode);
 
     for (const idx in variable.valuesByMode) {
       const modeValue = variable.valuesByMode[idx];
       const modeName = modes?.find((mode) => mode.modeId === idx)?.name;
-      //console.log("Mode Name:", modeName);
-      //console.log("Mode Value:", modeValue);
       const parsedValue = parseVariableValue(
         variable,
         modeName,
         modeValue,
         variables
       );
-      styleVar.values.push({ mode: modeName, value: parsedValue });
+      styleVar.values.push({ mode: modeName || "", value: parsedValue || "" });
     }
 
     console.log(variable);
@@ -159,9 +171,6 @@ async function generateCSS() {
   const cssString = toCSSString(Array.from(variableDictionary.values()));
   figma.ui.postMessage({ type: "css-generated", data: cssString });
   figma.notify("CSS Generated!");
-
-  // console.log("Collection Dictionary", collectionDictionary);
-  // console.log("Variable Dictionary", variableDictionary);
 }
 
 // ************************************
