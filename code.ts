@@ -27,6 +27,15 @@ type StyleVariable = {
   values: Array<StyleVarValue>;
 };
 
+function toCSSString(vars: Array<StyleVariable>) {
+  let css = ":root {\n";
+  for (const variable of vars) {
+    css += `  ${variable.cssPropertyName}:\n`; // ${variable.values[0].value};\n`;
+  }
+  css += "}";
+  return css;
+}
+
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__, { width: 400, height: 400 });
 
@@ -132,6 +141,11 @@ async function generateCSS() {
     console.log(variable);
     console.log("------");
   }
+
+  console.log("******* DONE ********");
+  const cssString = toCSSString(Array.from(variableDictionary.values()));
+  figma.ui.postMessage({ type: "css-generated", data: cssString });
+  figma.notify("CSS Generated!");
 
   // console.log("Collection Dictionary", collectionDictionary);
   // console.log("Variable Dictionary", variableDictionary);
