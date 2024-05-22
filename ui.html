@@ -1,0 +1,58 @@
+<h2>Few CSS Variable Exporter</h2>
+<button id="create">Create CSS</button>
+
+<section class="output">
+  <code id="codeOut"></code>
+</section>
+
+<style>
+  :root {
+    --color-brand: #80f;
+    --color-white: #fff;
+    --color-brand-dark: #0f0814;
+    --color-brand-2: #5f1eaf;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    padding: 0.5rem;
+    background-color: #0f0814;
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-dark) 0%,
+      var(--color-brand-2) 100%
+    );
+  }
+  h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: var(--color-white);
+  }
+  button {
+    border: 0;
+    background-color: var(--color-brand);
+    color: var(--color-white);
+    padding: 8px 16px;
+  }
+</style>
+<script>
+  document.getElementById("create").onclick = () => {
+    //const textbox = document.getElementById("count");
+    //const count = parseInt(textbox.value, 10);
+    //alert("CSS Variables Exported");
+    parent.postMessage({ pluginMessage: { type: "generate-css" } }, "*");
+    /*
+    parent.postMessage(
+      { pluginMessage: { type: "create-rectangles", count } },
+      "*"
+    );
+    */
+  };
+
+  // Might be boilerplate code
+  /*
+  document.getElementById("cancel").onclick = () => {
+    parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+  };*/
+</script>
