@@ -23,14 +23,20 @@ type StyleVariable = {
   id: string;
   data: Variable;
   cssPropertyName: string;
-  modeName: string;
   values: Array<StyleVarValue>;
 };
 
 function toCSSString(vars: Array<StyleVariable>) {
   let css = ":root {\n";
   for (const variable of vars) {
-    css += `  ${variable.cssPropertyName}:\n`; // ${variable.values[0].value};\n`;
+    let valueString = "";
+    console.log("toCSSString Variable:", variable);
+    if (variable.values?.length > 0) {
+      const modeValue = variable.values[0];
+      valueString = modeValue.value;
+    }
+
+    css += `  ${variable.cssPropertyName}: ${valueString};\n`;
   }
   css += "}";
   return css;
@@ -72,7 +78,7 @@ function parseVariableValue(
   value: VariableValue,
   allVariables: Array<Variable>
 ) {
-  const parsedValue: string = "";
+  let parsedValue: string = "";
 
   if (value === undefined) {
     console.log("Value is undefined");
@@ -86,10 +92,9 @@ function parseVariableValue(
     "type" in value &&
     value.type === "VARIABLE_ALIAS"
   ) {
-    console.log("Variable Alias:", value);
+    // Fetch the alias value
     const resolvedValue = resolveVarAlias(value, allVariables);
-    // Fetch the varaibles name
-    console.log("Resolved Value:", resolvedValue);
+    parsedValue = resolvedValue;
   }
 
   return parsedValue;
@@ -118,10 +123,9 @@ async function generateCSS() {
     styleVar.id = variable.id;
     styleVar.data = variable;
     styleVar.cssPropertyName = createCSSPropertyName(variable.name);
+    styleVar.values = [];
     //styleVar.value = "";
     variableDictionary.set(styleVar.id, styleVar);
-
-    console.log("Var Name:", styleVar.cssPropertyName);
 
     const varCollection = collectionDictionary.get(
       variable.variableCollectionId
@@ -129,13 +133,22 @@ async function generateCSS() {
 
     const modes = varCollection?.data.modes;
     console.log("Num Modes:", modes?.length);
+    if (modes?.length > 1) {
+      console.error("Multiple Modes not supported yet!");
+    }
 
     for (const idx in variable.valuesByMode) {
       const modeValue = variable.valuesByMode[idx];
       const modeName = modes?.find((mode) => mode.modeId === idx)?.name;
       //console.log("Mode Name:", modeName);
       //console.log("Mode Value:", modeValue);
-      parseVariableValue(variable, modeName, modeValue, variables);
+      const parsedValue = parseVariableValue(
+        variable,
+        modeName,
+        modeValue,
+        variables
+      );
+      styleVar.values.push({ mode: modeName, value: parsedValue });
     }
 
     console.log(variable);
