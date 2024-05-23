@@ -64,19 +64,8 @@ function toCSSString(
 
       css += `  ${variable.cssPropertyName}: ${valueString};\n`;
     }
+    css += "  /*********************/\n\n";
   }
-
-  /*
-  for (const variable of vars) {
-    let valueString = "";
-    // console.log("toCSSString Variable:", variable);
-    if (variable.values?.length > 0) {
-      const modeValue = variable.values[0];
-      valueString = modeValue.value;
-    }
-
-    css += `  ${variable.cssPropertyName}: ${valueString};\n`;
-  }*/
   css += "}";
   return css;
 }
