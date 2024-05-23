@@ -117,7 +117,9 @@ function parseVariableValue(
     // Number
     parsedValue = parseNumberValue(value);
   } else {
-    parsedValue = value.toString();
+    // this should be text so put it in quotes
+    // unsure if this can be converted to a CSS value
+    parsedValue = `'${value.toString()}'`;
   }
 
   return parsedValue;
