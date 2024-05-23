@@ -69,7 +69,6 @@
 
   onmessage = (event) => {
     const msg = event.data.pluginMessage;
-    console.log("Got Message", msg);
     if (msg.type === "css-generated") {
       const codeOut = document.getElementById("codeOut");
       codeOut.innerText = msg.data;

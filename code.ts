@@ -5,6 +5,24 @@
 // the *figma document* via the figma global object.
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
+// CODE STARTS HERE
+// ************************************
+// Calls to "parent.postMessage" from within the HTML page will trigger this
+// callback. The callback will be passed the "pluginMessage" property of the
+// posted message.
+figma.ui.onmessage = async (msg: { type: string; count: number }) => {
+  // One way of distinguishing between different types of messages sent from
+  // your HTML page is to use an object with a "type" property like this.
+  if (msg.type === "generate-css") {
+    figma.notify("Generating CSS...");
+    await generateCSS();
+  }
+
+  // Make sure to close the plugin when you're done. Otherwise the plugin will
+  // keep running, which shows the cancel button at the bottom of the screen.
+  // figma.closePlugin();
+};
+
 const FONT_BASE_SIZE: number = 16;
 
 type StyleCollection = {
@@ -95,8 +113,10 @@ function resolveVarAlias(
 
 function parseNumberValue(value: VariableValue): string {
   const valueNum = value as number;
+
+  // Convert "px" to "rem"
   const remValue = valueNum / FONT_BASE_SIZE;
-  return remValue.toFixed(2) + "rem";
+  return remValue.toFixed(3) + "rem";
 }
 
 function parseVariableValue(
@@ -108,11 +128,9 @@ function parseVariableValue(
   let parsedValue: string = "";
 
   if (value === undefined) {
-    console.log("Value is undefined");
+    console.error("Value is undefined");
     return null;
   }
-  console.log("Var Value:", value);
-  console.log("Var Resolved Type:", variable.resolvedType);
 
   if (
     value instanceof Object &&
@@ -148,7 +166,6 @@ async function generateCSS() {
 
   // process the collections
   for (const collection of collections) {
-    console.log("Collection:", collection);
     const styleCollection = {} as StyleCollection;
     styleCollection.id = collection.id;
     styleCollection.name = collection.name;
@@ -169,12 +186,9 @@ async function generateCSS() {
     const varCollection = collectionDictionary[variable.variableCollectionId];
 
     const modes = varCollection?.data.modes;
-    console.log("Num Modes:", modes?.length ?? 0);
     if ((modes?.length ?? 0) > 1) {
       console.error("Multiple Modes not supported yet!");
     }
-
-    console.log("generateCSS valuesbyMode:", variable.valuesByMode);
 
     for (const idx in variable.valuesByMode) {
       const modeValue = variable.valuesByMode[idx];
@@ -187,34 +201,18 @@ async function generateCSS() {
       );
       styleVar.values.push({ mode: modeName || "", value: parsedValue || "" });
     }
-
-    console.log(variable);
-    console.log("------");
   }
 
-  console.log("******* DONE ********");
+  // Done processing the variable and collections, generate CSS
+  // TODO: Add multiple output options
+  // TODO: Add support for multiple modes
+  // TODO: Add support for px and rem sizes and different base size for rems
   const cssString = toCSSString(collectionDictionary, variableDictionary);
 
   figma.ui.postMessage({ type: "css-generated", data: cssString });
   figma.notify("CSS Generated!");
 }
 
-// ************************************
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = async (msg: { type: string; count: number }) => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === "generate-css") {
-    figma.notify("Generating CSS...");
-    await generateCSS();
-  }
-
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  // figma.closePlugin();
-};
 // ************************************
 
 function createCSSPropertyName(name: string) {
