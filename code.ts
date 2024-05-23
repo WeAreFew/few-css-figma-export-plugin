@@ -15,6 +15,8 @@ type StyleCollection = {
   data: VariableCollection;
 };
 
+type StyleCollectionDict = Record<string, StyleCollection>;
+
 type StyleVarValue = {
   mode: string;
   value: string;
@@ -26,6 +28,8 @@ type StyleVariable = {
   cssPropertyName: string;
   values: Array<StyleVarValue>;
 };
+
+type StyleVariableDict = Record<string, StyleVariable>;
 
 function rgbaToHex(r: number, g: number, b: number, a: number) {
   return (
@@ -40,8 +44,29 @@ function rgbaToHex(r: number, g: number, b: number, a: number) {
   );
 }
 
-function toCSSString(vars: Array<StyleVariable>) {
+function toCSSString(
+  collections: StyleCollectionDict,
+  vars: StyleVariableDict
+) {
   let css = ":root {\n";
+
+  for (const collectionId in collections) {
+    const collection = collections[collectionId];
+    const collectionName = collection.name;
+    css += `  /* ${collectionName} */\n`;
+    for (const varID of collection.data.variableIds) {
+      const variable = vars[varID];
+      let valueString = "";
+      if (variable.values?.length > 0) {
+        const modeValue = variable.values[0];
+        valueString = modeValue.value;
+      }
+
+      css += `  ${variable.cssPropertyName}: ${valueString};\n`;
+    }
+  }
+
+  /*
   for (const variable of vars) {
     let valueString = "";
     // console.log("toCSSString Variable:", variable);
@@ -51,7 +76,7 @@ function toCSSString(vars: Array<StyleVariable>) {
     }
 
     css += `  ${variable.cssPropertyName}: ${valueString};\n`;
-  }
+  }*/
   css += "}";
   return css;
 }
@@ -129,8 +154,8 @@ async function generateCSS() {
   const variables = await figma.variables.getLocalVariablesAsync();
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
 
-  const collectionDictionary = new Map<string, StyleCollection>();
-  const variableDictionary = new Map<string, StyleVariable>();
+  const collectionDictionary: StyleCollectionDict = {};
+  const variableDictionary: StyleVariableDict = {};
 
   // process the collections
   for (const collection of collections) {
@@ -139,7 +164,7 @@ async function generateCSS() {
     styleCollection.id = collection.id;
     styleCollection.name = collection.name;
     styleCollection.data = collection;
-    collectionDictionary.set(styleCollection.id, styleCollection);
+    collectionDictionary[styleCollection.id] = styleCollection;
   }
 
   // process the variables
@@ -150,11 +175,9 @@ async function generateCSS() {
     styleVar.cssPropertyName = createCSSPropertyName(variable.name);
     styleVar.values = [];
     //styleVar.value = "";
-    variableDictionary.set(styleVar.id, styleVar);
+    variableDictionary[styleVar.id] = styleVar;
 
-    const varCollection = collectionDictionary.get(
-      variable.variableCollectionId
-    );
+    const varCollection = collectionDictionary[variable.variableCollectionId];
 
     const modes = varCollection?.data.modes;
     console.log("Num Modes:", modes?.length ?? 0);
@@ -181,7 +204,8 @@ async function generateCSS() {
   }
 
   console.log("******* DONE ********");
-  const cssString = toCSSString(Array.from(variableDictionary.values()));
+  const cssString = toCSSString(collectionDictionary, variableDictionary);
+
   figma.ui.postMessage({ type: "css-generated", data: cssString });
   figma.notify("CSS Generated!");
 }
@@ -210,58 +234,3 @@ function createCSSPropertyName(name: string) {
   cssName = `--${cssName}`;
   return cssName.toLowerCase();
 }
-
-/*
-function processCollection({
-  name,
-  modes,
-  variableIds,
-}: {
-  name: string;
-  modes: object[];
-  variableIds: string[];
-}) {
-  console.log(`Processing Collection: ${name}`);
-
-  for (const varID of variableIds) {
-    processVariable(varID, modes);
-  }
-}
-
-async function processVariable(varID: string, modes) {
-  const variable = await figma.variables.getVariableByIdAsync(varID);
-  if (!variable) {
-    return null;
-  }
-
-  const cssName = createCSSPropertyName(variable.name);
-  console.log(`Processing Variable: ${variable.name}`);
-  console.log(`CSS Name: ${cssName}`);
-  console.log(`Type: ${variable.resolvedType}`);
-
-  // Values for Each Mode
-  for (const mode of modes) {
-    const value = variable.valuesByMode[mode.modeId];
-    console.log("Mode:", mode, mode.modeId);
-    console.log("Mode Value:", value);
-    parseValue(variable, value);
-  }
-}
-
-function parseValue(variable: Variable, value: any) {
-  const parsedValue = null;
-  if (value === undefined) {
-    console.log("Value is undefined");
-    return null;
-  }
-  console.log("Value:", value);
-  console.log("Type:", variable.resolvedType);
-
-  if (value.type === "VARIABLE_ALIAS") {
-          const currentVar = await figma.variables.getVariableByIdAsync(
-            value.id
-          );
-
-  return parsedValue;
-}
-*/
