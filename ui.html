@@ -1,5 +1,8 @@
 <h2>Few CSS Variable Exporter</h2>
-<button id="create">Create CSS</button>
+<div class="button-group">
+  <button id="create">Create CSS</button>
+  <button id="copy">Copy CSS</button>
+</div>
 
 <section class="section-code-output">
   <p><em>Fonts are based on a base font size of 16px</em></p>
@@ -33,11 +36,16 @@
     margin-bottom: 2rem;
     color: var(--color-white);
   }
+  .button-group {
+    display: flex;
+    gap: 1rem;
+  }
   button {
     border: 0;
     background-color: var(--color-brand);
     color: var(--color-white);
     padding: 8px 16px;
+    cursor: pointer;
   }
 
   .section-code-output {
@@ -51,20 +59,12 @@
     overflow: auto;
     height: 300px;
     overflow-y: scroll;
+    cursor: text;
   }
 </style>
 <script>
   document.getElementById("create").onclick = () => {
-    //const textbox = document.getElementById("count");
-    //const count = parseInt(textbox.value, 10);
-    //alert("CSS Variables Exported");
     parent.postMessage({ pluginMessage: { type: "generate-css" } }, "*");
-    /*
-    parent.postMessage(
-      { pluginMessage: { type: "create-rectangles", count } },
-      "*"
-    );
-    */
   };
 
   onmessage = (event) => {
@@ -75,9 +75,34 @@
     }
   };
 
-  // Might be boilerplate code
-  /*
-  document.getElementById("cancel").onclick = () => {
-    parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
-  };*/
+  document.getElementById("copy").onclick = () => {
+    const codeOut = document.getElementById("codeOut");
+    copyToClipboard(codeOut.innerText);
+    //figma.notify("CSS copied to clipboard");
+    alert("CSS copied to clipboard");
+  };
+
+  // copied from figx library
+  function copyToClipboard(value) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+
+      const area = document.createElement("textarea");
+      document.body.appendChild(area);
+      area.value = value;
+      area.focus();
+      area.select();
+      const result = document.execCommand("copy");
+      document.body.removeChild(area);
+      if (!result) {
+        throw new Error();
+      }
+    } catch (e) {
+      console.error(e);
+      //console.error(`Unable to copy the value: ${value}`);
+      return false;
+    }
+    return true;
+  }
 </script>
