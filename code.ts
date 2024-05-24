@@ -66,10 +66,17 @@ function toCSSString(
   collections: StyleCollectionDict,
   vars: StyleVariableDict
 ) {
+  // Assuming the correct order of collection is sorted by name
+  const sortedCollections: StyleCollection[] = Object.values(
+    collections as StyleCollectionDict
+  ).sort((a: StyleCollection, b: StyleCollection) => {
+    return a.name.localeCompare(b.name);
+  });
+
   let css = ":root {\n";
 
-  for (const collectionId in collections) {
-    const collection = collections[collectionId];
+  for (const collectionId in sortedCollections) {
+    const collection = sortedCollections[collectionId];
     const collectionName = collection.name;
     css += `  /* ${collectionName} */\n`;
     for (const varID of collection.data.variableIds) {
@@ -160,6 +167,7 @@ function parseVariableValue(
 async function generateCSS() {
   const variables = await figma.variables.getLocalVariablesAsync();
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
+  console.log("Collections:", collections);
 
   const collectionDictionary: StyleCollectionDict = {};
   const variableDictionary: StyleVariableDict = {};
