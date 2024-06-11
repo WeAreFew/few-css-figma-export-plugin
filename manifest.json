@@ -2,7 +2,7 @@
   "name": "Few CSS Export",
   "id": "1372948975730695845",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "dist/code.js",
   "capabilities": ["inspect", "vscode"],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
