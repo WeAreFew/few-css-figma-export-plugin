@@ -1,108 +1,1462 @@
-<h2>Few CSS Variable Exporter</h2>
-<div class="button-group">
-  <button id="create">Create CSS</button>
-  <button id="copy">Copy CSS</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Few — Variables and Styles Exporter</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#282a36;--bg-alt:#1e1f29;--bg-panel:#21222c;--bg-card:#2d2f3e;
+  --border:#44475a;--comment:#6272a4;--fg:#f8f8f2;--fg-muted:#a0a3bb;
+  --cyan:#8be9fd;--green:#50fa7b;--orange:#ffb86c;--pink:#ff79c6;
+  --purple:#bd93f9;--red:#ff5555;--yellow:#f1fa8c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100vh;overflow:hidden;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg-alt);color:var(--fg);display:flex;flex-direction:column;}
+
+/* Header */
+header{background:var(--bg-panel);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
+.header-left{display:flex;align-items:center;gap:10px;min-width:0;}
+header h1{font-size:13px;font-weight:600;white-space:nowrap;}
+header p{font-size:10px;color:var(--comment);margin-top:1px;white-space:nowrap;}
+
+/* Buttons */
+.btn-sm{display:flex;align-items:center;gap:4px;background:var(--bg-card);border:1px solid var(--border);color:var(--fg-muted);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color 0.15s,border-color 0.15s;white-space:nowrap;flex-shrink:0;}
+.btn-sm:hover{color:var(--cyan);border-color:var(--cyan);}
+.btn-sm.active-btn{color:var(--purple);border-color:var(--purple);}
+.btn-copy{display:flex;align-items:center;gap:4px;background:var(--purple);color:var(--bg);border:none;border-radius:5px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;white-space:nowrap;}
+.btn-copy:hover{opacity:0.85;}
+.btn-copy.copied{background:var(--green);}
+.btn-download{display:flex;align-items:center;gap:4px;background:var(--bg-card);color:var(--fg-muted);border:1px solid var(--border);border-radius:5px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color 0.15s,border-color 0.15s;white-space:nowrap;}
+.btn-download:hover{color:var(--cyan);border-color:var(--cyan);}
+.btn-download.done{color:var(--green);border-color:var(--green);}
+
+/* Layout */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* Sidebar */
+.sidebar{width:210px;min-width:150px;flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+.sidebar-section{flex-shrink:0;}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--border);}
+.sidebar-section-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 5px;cursor:pointer;user-select:none;}
+.sidebar-section-head:hover .s-chevron{color:var(--fg-muted);}
+.sidebar-section-title{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--comment);}
+.s-chevron{color:var(--comment);transition:transform 0.2s;font-size:10px;line-height:1;}
+.s-chevron.collapsed{transform:rotate(-90deg);}
+.section-body{overflow:hidden;transition:max-height 0.2s ease;max-height:2000px;}
+.section-body.collapsed{max-height:0;}
+.item-list{padding:0 6px 6px;display:flex;flex-direction:column;gap:2px;}
+
+
+/* List items */
+.list-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;user-select:none;}
+.list-item:hover{background:var(--bg-card);border-color:var(--border);}
+.list-item.active{background:var(--bg-card);border-color:var(--purple);}
+.list-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.list-item .item-name{font-size:11px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.list-item .item-count{font-size:10px;color:var(--comment);background:var(--bg);padding:1px 5px;border-radius:8px;flex-shrink:0;}
+
+
+/* Main area */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+/* Settings panel */
+.settings-panel{width:0;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);overflow:hidden;transition:width 0.2s ease;display:flex;flex-direction:column;}
+.settings-panel.open{width:240px;}
+.settings-inner{width:240px;padding:12px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
+.settings-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.settings-title{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--comment);}
+.btn-close{background:none;border:none;color:var(--fg-muted);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:3px;transition:color 0.15s;}
+.btn-close:hover{color:var(--fg);}
+.section-label{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--comment);margin-bottom:6px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;}
+.toggle-row label{font-size:11px;color:var(--fg-muted);}
+.toggle{position:relative;width:32px;height:17px;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:17px;cursor:pointer;transition:background 0.2s;}
+.slider::before{content:'';position:absolute;width:11px;height:11px;left:3px;top:3px;background:var(--fg);border-radius:50%;transition:transform 0.2s;}
+.toggle input:checked+.slider{background:var(--purple);}
+.toggle input:checked+.slider::before{transform:translateX(15px);}
+.seg{display:flex;background:var(--bg);border-radius:5px;padding:2px;gap:2px;}
+.seg button{flex:1;padding:4px 0;font-size:11px;font-weight:500;background:transparent;border:none;color:var(--comment);border-radius:3px;cursor:pointer;transition:all 0.15s;font-family:'JetBrains Mono',monospace;}
+.seg button.active{background:var(--bg-card);color:var(--cyan);}
+.seg button:hover:not(.active){color:var(--fg);}
+.opt-group{display:flex;flex-direction:column;gap:8px;}
+.opt-label{font-size:10px;color:var(--comment);margin-bottom:3px;}
+.opt-hint{font-size:10px;color:var(--comment);margin-top:-4px;line-height:1.4;}
+.clamp-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px;display:flex;flex-direction:column;gap:6px;}
+.clamp-box.disabled{opacity:0.38;pointer-events:none;}
+.clamp-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.clamp-row label{font-size:10px;color:var(--fg-muted);white-space:nowrap;}
+.clamp-input{width:58px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 6px;text-align:right;outline:none;transition:border-color 0.15s;}
+.clamp-input:focus{border-color:var(--purple);}
+.clamp-hint{font-size:10px;color:var(--comment);line-height:1.4;}
+.clamp-group-row{display:flex;align-items:flex-start;gap:6px;padding:4px 5px;border-radius:4px;cursor:pointer;}
+.clamp-group-row:hover{background:var(--bg-card);}
+.clamp-group-row input[type=checkbox]{accent-color:var(--purple);flex-shrink:0;margin-top:2px;}
+.clamp-group-info{flex:1;min-width:0;}
+.clamp-group-name{font-size:11px;color:var(--fg-muted);font-family:'JetBrains Mono',monospace;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.clamp-col-badge{font-size:9px;color:var(--comment);background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:1px 4px;white-space:nowrap;margin-top:2px;display:inline-block;}
+
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-panel);border-bottom:1px solid var(--border);flex-shrink:0;gap:8px;}
+.toolbar-left{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;}
+.file-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);background:rgba(80,250,123,0.08);border:1px solid rgba(80,250,123,0.2);padding:2px 7px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+.var-count{font-size:10px;color:var(--comment);white-space:nowrap;}
+.toolbar-right{display:flex;gap:6px;flex-shrink:0;}
+
+/* Code area */
+.code-wrap{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg);}
+pre{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;white-space:pre;color:var(--fg);}
+.t-comment{color:var(--comment);font-style:italic;}
+.t-prop{color:var(--cyan);}
+.t-val-hex{color:var(--orange);}
+.t-val-num{color:var(--purple);}
+.t-val-ref{color:var(--pink);}
+.t-val-clamp{color:var(--yellow);}
+.t-punct{color:var(--fg-muted);}
+.state-center{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--comment);}
+.state-center .icon{font-size:32px;opacity:0.3;}
+.state-center p{font-size:12px;}
+
+/* Clash warning */
+.clash-banner{background:rgba(255,85,85,0.12);border:1px solid var(--red);border-radius:5px;padding:8px 12px;margin:12px 16px 0;font-size:11px;color:var(--red);display:none;line-height:1.5;}
+.clash-banner.show{display:block;}
+.clash-list{margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:0.85;}
+
+/* Loading overlay */
+.loading-overlay{position:absolute;inset:0;background:rgba(30,31,41,0.7);display:flex;align-items:center;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.15s;}
+.loading-overlay.show{opacity:1;pointer-events:all;}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 0.6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:var(--bg);font-size:11px;font-weight:600;padding:7px 14px;border-radius:6px;z-index:200;opacity:0;transform:translateY(6px);transition:opacity 0.2s,transform 0.2s;pointer-events:none;font-family:'DM Sans',sans-serif;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* Resize handle */
+.resize-handle{position:fixed;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:100;opacity:0.4;transition:opacity 0.15s;}
+.resize-handle:hover{opacity:1;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--comment);}
+
+/* Dev Mode */
+@media (max-width: 600px) {
+  /* Stack the main layout (sidebar on top, code on bottom) */
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 100px; flex-shrink: 0; }
+  
+  /* Wrap header buttons to a new line */
+  header { flex-wrap: wrap; padding-bottom: 12px; }
+  header > div:nth-child(2) { flex-basis: 100%; margin-top: 8px; }
+  
+  /* Wrap toolbar buttons to a new line */
+  .toolbar { flex-wrap: wrap; padding-bottom: 12px; }
+  .toolbar-right { flex-basis: 100%; margin-top: 4px; }
+  
+  /* Make settings panel an overlay on mobile/Dev Mode */
+  /* .settings-panel.open { width: 100%; position: absolute; height: 100%; z-index: 50; } */
+  .settings-inner { width: 100%; }
+
+	#resizeHandle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div style="color:var(--fg);line-height:0;flex-shrink:0;">
+      <svg width="26" height="22" viewBox="0 0 75 63" fill="none"><path d="M74.6922 20.0175C74.1816 20.2772 64.3293 28.6529 59.9694 26.4749C59.5528 26.2683 59.3592 25.56 58.7137 25.56C58.479 25.56 57.8922 25.6131 57.3641 26.5162C56.5895 27.8384 53.0628 32.3361 52.3998 32.0528C52.3059 32.0115 51.9303 31.4803 52.3176 28.9894C52.4643 28.0627 51.9773 27.4901 51.5196 27.3367C50.3108 26.9353 49.3132 28.5113 49.3132 28.5113C45.4932 33.9357 44.032 33.977 43.768 33.7646C43.4804 33.5344 45.1469 29.0071 45.276 28.5349C45.3641 28.2634 45.7455 26.829 44.4839 26.7169C43.6917 26.646 43.1636 27.2776 42.8291 27.8974L42.8232 27.9092C42.3362 28.6647 41.7024 29.863 40.6403 31.7105C38.3108 35.7714 36.4858 36.6745 35.9284 36.7276C35.7582 36.7454 35.1714 36.1551 34.7665 34.8801C37.6183 32.0528 42.3655 25.8846 40.0183 21.8059C39.4257 20.7612 38.2638 20.348 37.0022 20.7199C35.5411 21.1508 34.1152 22.5379 33.2408 24.6038C32.3078 26.8231 31.6448 30.589 31.9499 33.8118C26.0232 38.7168 22.2091 38.1856 22.121 38.1974C22.1386 37.5068 22.1621 36.7985 22.1915 36.0725C26.1113 31.4153 29.9783 22.65 32.1083 16.4405C34.3558 9.87093 35.1714 4.40515 34.3147 1.81983C33.9157 0.474039 32.3137-1.11375 29.0746 1.10561C27.0853 2.46911 24.6971 6.24085 22.1973 13.4774C19.633 20.9028 19.0404 32.0528 19.1166 34.5201C18.7176 34.9333 10.2443 45.1506 0.368492 42.2761C-0.57625 42.0045 0.151378 44.6961 4.24722 45.369C10.0154 46.3193 15.2438 42.5476 18.9699 39.2303C18.8702 44.035 18.9934 49.6484 19.9851 55.0728C20.7655 59.3227 23.2008 63 25.6594 63C28.8868 63 29.3915 57.6169 29.1274 54.1698C28.7518 49.1526 26.2169 44.1767 24.2159 40.6647C27.2379 40.281 30.1836 38.5515 32.5954 36.7217C33.0589 37.92 33.7748 38.8644 34.8017 39.3425C37.6536 40.582 41.456 35.2756 41.4795 35.2461C42.7939 37.3415 45.6927 36.1138 47.5059 34.6204C48.0457 34.2132 48.8731 33.316 49.6829 32.3597C49.6888 32.3834 49.8061 34.4374 51.4433 34.9333C52.3704 35.2166 53.3738 34.8447 54.612 33.8059C56.4134 32.3302 58.7372 28.9776 58.9015 28.6824C59.4354 28.9008 66.8643 31.1497 74.0526 22.2899C75.1264 20.9914 75.2085 19.7577 74.6922 20.0175ZM26.6452 10.7681C27.8482 7.97621 28.9924 6.18773 29.7435 5.17249C30.5944 4.00968 31.1871 3.53157 31.4511 3.3781C31.5391 3.64962 31.68 4.5173 31.2809 6.88423C30.923 9.00326 30.2071 11.7716 29.2858 14.6992C26.5455 23.4055 24.0927 28.0804 22.4731 30.5299C22.5377 29.438 22.614 28.3283 22.6961 27.2009C23.1773 20.7199 24.9435 14.7169 26.6452 10.7681ZM25.724 51.3011C26.88 55.3562 26.6394 60.7452 25.3954 59.5057C23.1479 57.2686 22.5318 51.4782 22.1973 46.579C22.1328 45.5874 22.0917 44.3951 22.08 43.0434C23.6761 45.5579 24.9259 48.2082 25.724 51.3011ZM34.9367 27.9977C35.6408 25.3003 37.1078 23.1458 37.4893 23.2167C37.8648 23.2875 37.9704 23.86 37.8824 24.6038C37.7768 25.5187 36.4624 29.0071 34.3851 31.5275C34.4203 30.5122 34.5905 29.3376 34.9367 27.9977Z" fill="currentColor"></path></svg>
+    </div>
+    <div>
+      <h1>Variables and Styles Exporter</h1>
+      <p>Reads your Figma native variable collections and styles</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+    <button class="btn-sm" id="refreshBtn" onclick="doRefresh()" title="Re-reads all variables and styles from your Figma file after changes">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.51"></path></svg>
+      Refresh
+    </button>
+    <button class="btn-sm" id="settingsBtn" onclick="toggleSettings()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      Settings
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-scroll">
+
+      <!-- Collections -->
+      <div class="sidebar-section" id="sec-collections">
+        <div class="sidebar-section-head" onclick="toggleSection('collections')">
+          <span class="sidebar-section-title">Collections</span>
+          <span class="s-chevron" id="chev-collections">▾</span>
+        </div>
+        <div class="section-body" id="body-collections">
+          <div class="item-list" id="list-collections"></div>
+        </div>
+      </div>
+
+      <!-- Text Styles -->
+      <div class="sidebar-section" id="sec-text">
+        <div class="sidebar-section-head" onclick="toggleSection('text')">
+          <span class="sidebar-section-title">Text Styles</span>
+          <span class="s-chevron" id="chev-text">▾</span>
+        </div>
+        <div class="section-body" id="body-text">
+          <div class="item-list" id="list-text"></div>
+        </div>
+      </div>
+
+      <!-- Color Styles -->
+      <div class="sidebar-section" id="sec-color">
+        <div class="sidebar-section-head" onclick="toggleSection('color')">
+          <span class="sidebar-section-title">Color Styles</span>
+          <span class="s-chevron" id="chev-color">▾</span>
+        </div>
+        <div class="section-body" id="body-color">
+          <div class="item-list" id="list-color"></div>
+        </div>
+      </div>
+
+      <!-- Effect Styles -->
+      <div class="sidebar-section" id="sec-effect">
+        <div class="sidebar-section-head" onclick="toggleSection('effect')">
+          <span class="sidebar-section-title">Effect Styles</span>
+          <span class="s-chevron" id="chev-effect">▾</span>
+        </div>
+        <div class="section-body" id="body-effect">
+          <div class="item-list" id="list-effect"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="main-area">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="file-badge" id="fileBadge">base-variables.scss</span>
+        <span class="var-count" id="varCount">0 variables</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-download" id="downloadZipBtn" onclick="downloadZip()" style="display:none;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download zip
+        </button>
+        <button class="btn-download" id="downloadBtn" onclick="downloadCurrent()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download
+        </button>
+        <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+    </div>
+
+    <!-- Code + settings -->
+    <div style="flex:1;display:flex;overflow:hidden;position:relative;">
+      <div class="clash-banner" id="clashBanner"><strong>Name clashes detected</strong> — these variables share the same export name:<div class="clash-list" id="clashList"></div></div>
+      <div class="code-wrap" id="codeWrap" style="flex:1;"><div class="state-center"><div class="icon">⟨/⟩</div><p>Reading variables and styles…</p></div></div>
+
+      <!-- Loading overlay -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Settings panel -->
+      <div class="settings-panel" id="settingsPanel">
+        <div class="settings-inner">
+          <div class="settings-header">
+            <span class="settings-title">Settings</span>
+            <button class="btn-close" onclick="toggleSettings()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <div class="opt-group">
+            <div class="section-label" style="margin-bottom:4px;">Export</div>
+            <div>
+              <div class="opt-label">Format</div>
+              <div class="seg">
+                <button onclick="setOpt('format','css',this)">CSS</button>
+                <button class="active" onclick="setOpt('format','scss',this)">SCSS</button>
+              </div>
+            </div>
+
+            <div class="toggle-row" id="mixinsToggleRow">
+              <label>Output text mixins</label>
+              <label class="toggle" id="mixinsToggleWrap">
+                <input type="checkbox" id="useMixins" onchange="savePrefs();render()" checked="">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="opt-hint">On: <span style="font-family:monospace;color:var(--pink)">@mixin h1{}</span>&nbsp; Off: <span style="font-family:monospace;color:var(--cyan)">.h1{}</span></div>
+
+            <div>
+              <div class="opt-label">Unit</div>
+              <div class="seg">
+                <button onclick="setOpt('unit','px',this)">px</button>
+                <button class="active" onclick="setOpt('unit','rem',this)">rem</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="opt-label">Color</div>
+              <div class="seg">
+                <button onclick="setOpt('color','rgba',this)">rgba</button>
+                <button class="active" onclick="setOpt('color','hex',this)">Hex</button>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <label>Resolve aliases</label>
+              <label class="toggle">
+                <input type="checkbox" id="resolveAliases" onchange="savePrefs();render()" checked="">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div class="section-label" style="margin:0;">Clamp()</div>
+              <label class="toggle">
+                <input type="checkbox" id="useClamp" onchange="onClampToggle()" checked="">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="clamp-box" id="clampBox">
+              <div class="clamp-row">
+                <label>Min viewport</label>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="clamp-input" id="clampMinVp" type="number" value="390" onchange="savePrefs();render()">
+                  <span style="font-size:10px;color:var(--comment)">px</span>
+                </div>
+              </div>
+              <div class="clamp-row">
+                <label>Max viewport</label>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input class="clamp-input" id="clampMaxVp" type="number" value="1440" onchange="savePrefs();render()">
+                  <span style="font-size:10px;color:var(--comment)">px</span>
+                </div>
+              </div>
+              <div class="clamp-hint">Desktop var stays, <span style="color:var(--pink)">-mobile</span> → <span style="color:var(--yellow)">clamp()</span>.</div>
+              <div id="clampGroupList" style="display:flex;flex-direction:column;gap:2px;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+            </div>
+          </div>
+          </div>
+
+          <!-- Multi-mode selector -->
+          <div id="modeSection" style="display:none;">
+            <div class="section-label">Variable Mode</div>
+            <div id="modeList" style="display:flex;flex-direction:column;gap:4px;"></div>
+            <div class="opt-hint" style="margin-top:4px;">Select which mode to export</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<div class="resize-handle" id="resizeHandle">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12 4L4 12M16 8L8 16M16 12L12 16" stroke="var(--comment)" stroke-width="1.5" stroke-linecap="round"></path>
+  </svg>
 </div>
 
-<section class="section-code-output">
-  <p><em>Fonts are based on a base font size of 16px</em></p>
-  <pre class="code-block">
-  <code id="codeOut"></code>
-  </pre>
-</section>
-
-<style>
-  :root {
-    --color-brand: #80f;
-    --color-white: #fff;
-    --color-brand-dark: #0f0814;
-    --color-brand-2: #5f1eaf;
-  }
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    padding: 0.5rem;
-    color: white;
-    background-color: #0f0814;
-    background: linear-gradient(
-      90deg,
-      var(--color-brand-dark) 0%,
-      var(--color-brand-2) 100%
-    );
-  }
-  h2 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 2rem;
-    color: var(--color-white);
-  }
-  .button-group {
-    display: flex;
-    gap: 1rem;
-  }
-  button {
-    border: 0;
-    background-color: var(--color-brand);
-    color: var(--color-white);
-    padding: 8px 16px;
-    cursor: pointer;
-  }
-
-  .section-code-output {
-    margin-top: 2rem;
-  }
-  .code-block {
-    background-color: #f8f8f8;
-    color: #333;
-    padding: 1rem;
-    border-radius: 4px;
-    overflow: auto;
-    height: 300px;
-    overflow-y: scroll;
-    cursor: text;
-  }
-</style>
 <script>
-  document.getElementById("create").onclick = () => {
-    parent.postMessage({ pluginMessage: { type: "generate-css" } }, "*");
-  };
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+const opts = { format: 'scss', unit: 'rem', color: 'hex' };
+let collections    = [];
+let textStyles     = [];
+let colorStyles    = [];
+let effectStyles   = [];
+let activeColId    = '__all__';   // collection id or '__all__'
+let activeFolderType = null;      // 'text'|'color'|'effect' — null when collection active
+let activeFolder   = null;        // folder string or '__all_text__' etc.
+let ready          = false;
+const clampGroups  = new Set();
+let settingsOpen   = false;
+let sectionCollapsed = { collections:false, text:false, color:false, effect:false };
+// selected mode per collection id
+let selectedModes  = {};
 
-  onmessage = (event) => {
-    const msg = event.data.pluginMessage;
-    if (msg.type === "css-generated") {
-      const codeOut = document.getElementById("codeOut");
-      codeOut.innerText = msg.data;
+// ═══════════════════════════════════════════════════════════════════════════
+// PERSISTENCE  (localStorage saved between plugin opens)
+// ═══════════════════════════════════════════════════════════════════════════
+const PREFS_KEY = 'few_exporter_prefs_v2';
+
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+    if (p.format) opts.format = p.format;
+    if (p.unit)   opts.unit   = p.unit;
+    if (p.color)  opts.color  = p.color;
+    if (p.clampMinVp) document.getElementById('clampMinVp').value = p.clampMinVp;
+    if (p.clampMaxVp) document.getElementById('clampMaxVp').value = p.clampMaxVp;
+    if (typeof p.resolveAliases === 'boolean') document.getElementById('resolveAliases').checked = p.resolveAliases;
+    if (typeof p.useMixins      === 'boolean') document.getElementById('useMixins').checked      = p.useMixins;
+    if (typeof p.useClamp       === 'boolean') {
+      document.getElementById('useClamp').checked = p.useClamp;
+      document.getElementById('clampBox').classList.toggle('disabled', !p.useClamp);
     }
-  };
-
-  document.getElementById("copy").onclick = () => {
-    const codeOut = document.getElementById("codeOut");
-    copyToClipboard(codeOut.innerText);
-    //figma.notify("CSS copied to clipboard");
-    alert("CSS copied to clipboard");
-  };
-
-  // copied from figx library
-  function copyToClipboard(value) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-
-      const area = document.createElement("textarea");
-      document.body.appendChild(area);
-      area.value = value;
-      area.focus();
-      area.select();
-      const result = document.execCommand("copy");
-      document.body.removeChild(area);
-      if (!result) {
-        throw new Error();
+    if (typeof p.settingsOpen   === 'boolean' && p.settingsOpen) {
+      settingsOpen = true;
+      document.getElementById('settingsPanel').classList.add('open');
+      document.getElementById('settingsBtn').classList.add('active-btn');
+    }
+    if (p.sectionCollapsed) sectionCollapsed = Object.assign(sectionCollapsed, p.sectionCollapsed);
+    // Apply section states
+    for (const id of Object.keys(sectionCollapsed)) {
+      if (sectionCollapsed[id]) {
+        const body  = document.getElementById('body-' + id);
+        const chev  = document.getElementById('chev-' + id);
+        if (body) body.classList.add('collapsed');
+        if (chev) chev.classList.add('collapsed');
       }
-    } catch (e) {
-      console.error(e);
-      //console.error(`Unable to copy the value: ${value}`);
-      return false;
     }
-    return true;
+    // Apply format/unit/color seg buttons
+    applySegState('format', opts.format);
+    applySegState('unit',   opts.unit);
+    applySegState('color',  opts.color);
+    // Disable mixin toggle if CSS
+    if (opts.format === 'css') disableMixinToggle();
+  } catch(e) {}
+}
+
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      format:          opts.format,
+      unit:            opts.unit,
+      color:           opts.color,
+      clampMinVp:      document.getElementById('clampMinVp').value,
+      clampMaxVp:      document.getElementById('clampMaxVp').value,
+      resolveAliases:  document.getElementById('resolveAliases').checked,
+      useMixins:       document.getElementById('useMixins').checked,
+      useClamp:        document.getElementById('useClamp').checked,
+      settingsOpen:    settingsOpen,
+      sectionCollapsed: sectionCollapsed,
+    }));
+  } catch(e) {}
+}
+
+function applySegState(key, val) {
+  // Find the seg that contains buttons for this key and mark active
+  document.querySelectorAll('.seg button').forEach(btn => {
+    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'"+key+"'")) {
+      const isActive = btn.getAttribute('onclick').includes("'"+val+"'");
+      btn.classList.toggle('active', isActive);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIGMA BRIDGE
+// ═══════════════════════════════════════════════════════════════════════════
+window.onmessage = (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg || msg.type !== 'variables') return;
+
+  collections  = msg.collections  || [];
+  textStyles   = msg.textStyles   || [];
+  colorStyles  = msg.colorStyles  || [];
+  effectStyles = msg.effectStyles || [];
+
+  // Sort collections numerically if named with leading numbers
+  collections.sort((a, b) => {
+    const nA = parseInt(a.name, 10), nB = parseInt(b.name, 10);
+    if (!isNaN(nA) && !isNaN(nB)) return nA - nB;
+    if (!isNaN(nA)) return -1; if (!isNaN(nB)) return 1;
+    return 0;
+  });
+
+  // Populate mode selector if any collection has multiple modes
+  buildModeSection();
+
+  ready = true;
+  hideLoading();
+  buildAllLists();
+  clampGroups.clear();
+  buildClampGroupList();
+  render();
+};
+
+function doRefresh() {
+  showLoading();
+  parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOADING
+// ═══════════════════════════════════════════════════════════════════════════
+function showLoading() {
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  const h = document.getElementById('resizeHandle');
+  let drag = false, sx, sy, sw, sh;
+  h.addEventListener('mousedown', e => { drag=true; sx=e.screenX; sy=e.screenY; sw=window.innerWidth; sh=window.innerHeight; e.preventDefault(); });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return;
+    parent.postMessage({ pluginMessage: { type:'resize', width:Math.max(480,Math.round(sw+(e.screenX-sx))), height:Math.max(320,Math.round(sh+(e.screenY-sy))) }}, '*');
+  });
+  document.addEventListener('mouseup', () => { drag=false; });
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS + COLLAPSE
+// ═══════════════════════════════════════════════════════════════════════════
+function toggleSettings() {
+  settingsOpen = !settingsOpen;
+  document.getElementById('settingsPanel').classList.toggle('open', settingsOpen);
+  document.getElementById('settingsBtn').classList.toggle('active-btn', settingsOpen);
+  savePrefs();
+}
+
+function toggleSection(id) {
+  sectionCollapsed[id] = !sectionCollapsed[id];
+  document.getElementById('body-' + id).classList.toggle('collapsed', sectionCollapsed[id]);
+  document.getElementById('chev-' + id).classList.toggle('collapsed', sectionCollapsed[id]);
+  savePrefs();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// OPTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+function setOpt(key, val, btn) {
+  opts[key] = val;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (key === 'format') {
+    if (val === 'css') disableMixinToggle();
+    else enableMixinToggle();
   }
+  savePrefs();
+  render();
+}
+
+function disableMixinToggle() {
+  const w = document.getElementById('mixinsToggleWrap');
+  const c = document.getElementById('useMixins');
+  if (w) { w.style.opacity='0.38'; w.style.pointerEvents='none'; }
+  if (c) c.checked = false;
+}
+function enableMixinToggle() {
+  const w = document.getElementById('mixinsToggleWrap');
+  const c = document.getElementById('useMixins');
+  if (w) { w.style.opacity=''; w.style.pointerEvents=''; }
+  if (c) c.checked = true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MULTI-MODE
+// ═══════════════════════════════════════════════════════════════════════════
+function buildModeSection() {
+  const sec  = document.getElementById('modeSection');
+  const list = document.getElementById('modeList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Find all collections that have more than one mode
+  const multiMode = collections.filter(c => c.modes && c.modes.length > 1);
+  if (!multiMode.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  for (const col of multiMode) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:10px;color:var(--comment);';
+    lbl.textContent = col.name;
+    wrap.appendChild(lbl);
+
+    const sel = document.createElement('div');
+    sel.style.cssText = 'display:flex;gap:3px;flex-wrap:wrap;';
+
+    for (const mode of col.modes) {
+      const btn = document.createElement('button');
+      btn.textContent = mode.name;
+      btn.style.cssText = 'background:var(--bg);border:1px solid var(--border);color:var(--fg-muted);border-radius:3px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all 0.15s;';
+      const isActive = (selectedModes[col.id] || col.defaultModeId) === mode.modeId;
+      if (isActive) { btn.style.borderColor='var(--purple)'; btn.style.color='var(--purple)'; }
+      btn.onclick = () => {
+        selectedModes[col.id] = mode.modeId;
+        // Request re-export with this mode
+        parent.postMessage({ pluginMessage: { type:'setMode', collectionId:col.id, modeId:mode.modeId } }, '*');
+        buildModeSection();
+      };
+      sel.appendChild(btn);
+    }
+    wrap.appendChild(sel);
+    list.appendChild(wrap);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIDEBAR LISTS
+// ═══════════════════════════════════════════════════════════════════════════
+const COL_COLORS = ['var(--purple)','var(--cyan)','var(--green)','var(--orange)','var(--pink)','var(--yellow)','var(--red)'];
+
+function buildAllLists() {
+  buildList('collections');
+  buildList('text');
+  buildList('color');
+  buildList('effect');
+}
+
+function buildList(type) {
+  if (type === 'collections') buildCollectionList();
+  else buildStyleList(type);
+}
+
+function buildCollectionList() {
+  const el   = document.getElementById('list-collections');
+  el.innerHTML = '';
+
+  // All item
+  const allActive = activeColId === '__all__' && !activeFolderType;
+  el.appendChild(makeListItem('__all__', 'All Collections', collections.reduce((s,c)=>s+c.vars.length,0), 'var(--fg-muted)', 'collections', allActive));
+
+  collections.forEach((col, i) => {
+    const active = activeColId === col.id && !activeFolderType;
+    const item = makeListItem(col.id, col.name, col.vars.length, COL_COLORS[i % COL_COLORS.length], 'collections', active);
+    el.appendChild(item);
+
+  });
+}
+
+function buildStyleList(type) {
+  const listId   = 'list-' + type;
+  const el       = document.getElementById(listId);
+  const data     = type === 'text' ? textStyles : type === 'color' ? colorStyles : effectStyles;
+  const allId    = '__all_' + type + '__';
+  const dotColor = type === 'text' ? 'var(--yellow)' : type === 'color' ? 'var(--pink)' : 'var(--cyan)';
+  el.innerHTML   = '';
+
+  // Unique top-level folders
+  const folders = [];
+  const seen    = new Set();
+  for (const st of data) {
+    const top = st.folderPath ? st.folderPath.split('/')[0] : '';
+    if (top && !seen.has(top)) { seen.add(top); folders.push(top); }
+  }
+
+  // All item
+  const allCount  = data.length;
+  const allActive = activeFolderType === type && activeFolder === allId;
+  if (allCount) el.appendChild(makeListItem(allId, 'All', allCount, dotColor, type, allActive));
+
+  for (const folder of folders) {
+    const count  = data.filter(st => (st.folderPath ? st.folderPath.split('/')[0] : '') === folder).length;
+    const active = activeFolderType === type && activeFolder === folder;
+    el.appendChild(makeListItem(folder, '/ ' + folder, count, dotColor, type, active));
+  }
+
+
+}
+
+function makeListItem(id, label, count, color, type, isActive) {
+  const el = document.createElement('div');
+  el.className = 'list-item' + (isActive ? ' active' : '');
+
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'item-name';
+  nameSpan.textContent = label;
+
+  const countSpan = document.createElement('span');
+  countSpan.className = 'item-count';
+  countSpan.textContent = count;
+
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  dot.style.background = color;
+
+  el.appendChild(dot);
+  el.appendChild(nameSpan);
+  el.appendChild(countSpan);
+
+  el.onclick = () => selectItem(id, type);
+
+  return el;
+}
+
+function selectItem(id, type) {
+  if (type === 'collections') {
+    if (activeColId === id && !activeFolderType) return; // already active
+    activeColId      = id;
+    activeFolderType = null;
+    activeFolder     = null;
+  } else {
+    const allId = '__all_' + type + '__';
+    if (activeFolderType === type && activeFolder === id) return; // already active
+    activeFolderType = type;
+    activeFolder     = id;
+    activeColId      = null;
+  }
+  buildAllLists();
+  render();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILENAME HELPER
+// ═══════════════════════════════════════════════════════════════════════════
+function makeFileName(name, ext) {
+  return name.toLowerCase()
+    .replace(/\s*-\s*/g, '-').replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') + ext;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VALUE FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════
+const PERCENT_KEYWORDS  = ['opacity','alpha'];
+const UNITLESS_KEYWORDS = ['ratio','scale','multiplier','factor','z-index','zindex','columns','order','flex'];
+function isPercentName(name)  { return PERCENT_KEYWORDS.some(k => (name||'').toLowerCase().includes(k)); }
+function isUnitlessName(name) { return UNITLESS_KEYWORDS.some(k => (name||'').toLowerCase().includes(k)); }
+
+function pxToDisplay(px) {
+  if (opts.unit === 'px') return px + 'px';
+  return parseFloat((px/16).toFixed(4)) + 'rem';
+}
+
+function formatValue(v, name) {
+  if (!v) return { str:'???', cls:'t-val-num' };
+  switch(v.type) {
+    case 'color': {
+      if (opts.color === 'rgba') return { str:v.rgba, cls:'t-val-hex' };
+      let hex = v.hex;
+      if (hex.length === 9 && hex.slice(7).toUpperCase() === 'FF') hex = hex.slice(0,7);
+      return { str:hex, cls:'t-val-hex' };
+    }
+    case 'number': return { str: isPercentName(name) ? v.px + '%' : isUnitlessName(name) ? String(v.px) : pxToDisplay(v.px), cls:'t-val-num' };
+    case 'string': return { str:`"${v.raw}"`, cls:'t-val-num' };
+    case 'boolean': return { str:v.raw, cls:'t-val-num' };
+    default: return { str:v.raw||'???', cls:'t-val-num' };
+  }
+}
+
+function cleanHex(hex) {
+  if (!hex) return hex;
+  if (hex.length === 9 && hex.slice(7).toUpperCase() === 'FF') return hex.slice(0,7);
+  return hex;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GROUPING
+// ═══════════════════════════════════════════════════════════════════════════
+const COMPOUND_TOKENS = ['font-size','line-height','brand-primary','brand-secondary'];
+function getSegments(name) {
+  for (const ct of COMPOUND_TOKENS) {
+    if (name === ct) return [ct];
+    if (name.startsWith(ct+'-')) return [ct, ...name.slice(ct.length+1).split('-')];
+  }
+  return name.split('-');
+}
+function computeGroupKey(name, allNames) {
+  const segs = getSegments(name);
+  for (let len = segs.length-1; len >= 1; len--) {
+    const c = segs.slice(0,len).join('-');
+    if (allNames.some(o => o !== name && o.startsWith(c+'-'))) return c;
+  }
+  return null;
+}
+function groupAndSort(vars) {
+  const allNames = vars.map(v=>v.name);
+  const nameToKey = {};
+  for (const v of vars) nameToKey[v.name] = computeGroupKey(v.name, allNames);
+  const groupMap={}, groupOrder=[];
+  for (const v of vars) {
+    const k = nameToKey[v.name];
+    if (k) { if (!groupMap[k]){ groupMap[k]=[]; groupOrder.push(k); } groupMap[k].push(v); }
+  }
+  for (const k of groupOrder) {
+    groupMap[k].sort((a,b)=>{
+      // Primitives always before aliases so $ref is defined before it's used
+      if (!a.isAlias && b.isAlias) return -1;
+      if (a.isAlias && !b.isAlias) return 1;
+      // Within same type, sort numerically then alphabetically by suffix
+      const sA=a.name.slice(k.length+1), sB=b.name.slice(k.length+1);
+      const nA=parseInt(sA,10), nB=parseInt(sB,10);
+      if(!isNaN(nA)&&!isNaN(nB)) return nA-nB;
+      if(!isNaN(nA)) return 1; if(!isNaN(nB)) return -1;
+      return sA.localeCompare(sB);
+    });
+  }
+  const result=[], eG=new Set(), eS=new Set();
+  for (const v of vars) {
+    const k = nameToKey[v.name];
+    if (k) { if(!eG.has(k)){ eG.add(k); result.push({groupName:k,vars:groupMap[k]}); } }
+    else { if(!eS.has(v.name)){ eS.add(v.name); result.push({groupName:null,vars:[v]}); } }
+  }
+  return result;
+}
+function dedup(vars) {
+  const seen=new Set();
+  return vars.filter(v=>{ if(seen.has(v.name))return false; seen.add(v.name); return true; });
+}
+function stripCollectionNumber(name) {
+  // "1 - Primitives" → "Primitives", "4 - Size" → "Size", "Theme" → "Theme"
+  return name.replace(/^\d+\s*-\s*/, '').trim();
+}
+
+function fixNameJS(name) {
+  return name.replace(/\s+/g,'-').replace(/-+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLAMP
+// ═══════════════════════════════════════════════════════════════════════════
+function onClampToggle() {
+  const on = document.getElementById('useClamp').checked;
+  document.getElementById('clampBox').classList.toggle('disabled', !on);
+  if (on) buildClampGroupList(); else { clampGroups.clear(); }
+  savePrefs();
+  render();
+}
+
+function buildClampGroupList() {
+  const list = document.getElementById('clampGroupList');
+  if (!list) return;
+  list.innerHTML = '';
+  clampGroups.clear();
+  if (!ready) return;
+
+  const allVarNames = new Set();
+  for (const col of collections) for (const v of col.vars) allVarNames.add(v.name);
+
+  const groupsSeen = new Set();
+  const eligible   = [];
+  for (const col of collections) {
+    const unique = dedup(col.vars);
+    for (const { groupName, vars:gVars } of groupAndSort(unique)) {
+      if (!groupName || groupsSeen.has(groupName)) continue;
+      groupsSeen.add(groupName);
+      const hasDesktop = gVars.some(v => !v.name.endsWith('-mobile') && allVarNames.has(v.name+'-mobile'));
+      if (hasDesktop) eligible.push({ groupName, colName:col.name });
+    }
+  }
+
+  if (!eligible.length) {
+    list.innerHTML = '<div style="font-size:10px;color:var(--comment);">No mobile/desktop pairs found.</div>';
+    updateClampPreviewSelect();
+    return;
+  }
+
+  for (const { groupName, colName } of eligible) {
+    const label = groupName.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    clampGroups.add(groupName);
+    const row = document.createElement('div');
+    row.className = 'clamp-group-row';
+    const cb = document.createElement('input');
+    cb.type='checkbox'; cb.checked=true;
+    cb.onchange = () => { if(cb.checked) clampGroups.add(groupName); else clampGroups.delete(groupName); render(); };
+    const info = document.createElement('div');
+    info.className = 'clamp-group-info';
+    info.style.cursor = 'pointer';
+    info.onclick = () => { cb.checked = !cb.checked; cb.onchange(); };
+    info.innerHTML = `<span class="clamp-group-name">${label}</span><span class="clamp-col-badge">${colName}</span>`;
+    row.appendChild(cb); row.appendChild(info);
+    list.appendChild(row);
+  }
+}
+
+// Clamp preview
+
+
+
+
+
+function resolveVarToPx(v) {
+  const val = v.resolved || v.value;
+  if (val && val.type === 'number') return val.px;
+  return null;
+}
+
+function buildClampPairsForGroup(allVars, groupName) {
+  const byName={};
+  for (const v of allVars) byName[v.name]=v;
+  const pairs={}, consumed=new Set();
+  for (const v of allVars) {
+    if (v.name.endsWith('-mobile')) continue;
+    const key = computeGroupKey(v.name, allVars.map(x=>x.name));
+    if (key !== groupName) continue;
+    const mv = byName[v.name+'-mobile'];
+    if (!mv) continue;
+    const minPx=resolveVarToPx(mv), maxPx=resolveVarToPx(v);
+    if (minPx===null||maxPx===null) continue;
+    pairs[v.name]={minPx,maxPx};
+    consumed.add(v.name+'-mobile');
+  }
+  return {pairs,consumed};
+}
+
+function generateClampStr(minPx, maxPx) {
+  const minVp=parseFloat(document.getElementById('clampMinVp').value)||390;
+  const maxVp=parseFloat(document.getElementById('clampMaxVp').value)||1440;
+  const slope=(maxPx-minPx)/(maxVp-minVp);
+  const intercept=minPx-slope*minVp;
+  function toUnit(px){ return opts.unit==='px' ? Math.round(px)+'px' : parseFloat((px/16).toFixed(1))+'rem'; }
+  const sv=parseFloat((slope*100).toFixed(1))+'vw';
+  let mid=Math.abs(intercept)<0.001?sv:intercept>0?sv+' + '+toUnit(intercept):sv+' - '+toUnit(Math.abs(intercept));
+  return 'clamp('+toUnit(minPx)+', '+mid+', '+toUnit(maxPx)+')';
+}
+function renderClampVar(name,str){
+  const vn=opts.format==='css'?'--'+name:'$'+name;
+  const i=opts.format==='css'?'  ':'';
+  return `<span class="t-prop">${i}${vn}</span><span class="t-punct">: </span><span class="t-val-clamp">${str}</span><span class="t-punct">;</span>\n`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER VAR LINE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderVar(v, resolveAliases, consumed) {
+  if (consumed && consumed.has(v.name)) return '';
+  const varName = opts.format==='css' ? '--'+v.name : '$'+v.name;
+  let valueStr, valueClass;
+  if (!resolveAliases && v.isAlias && v.aliasName) {
+    valueStr  = opts.format==='css' ? 'var(--'+v.aliasName+')' : '$'+v.aliasName;
+    valueClass = 't-val-ref';
+  } else {
+    const val = resolveAliases ? (v.resolved||v.value) : (v.value||v.resolved);
+    const {str,cls} = formatValue(val, v.name);
+    valueStr=str; valueClass=cls;
+  }
+  const indent=opts.format==='css'?'  ':'';
+  return `<span class="t-prop">${indent}${varName}</span><span class="t-punct">: </span><span class="${valueClass}">${valueStr}</span><span class="t-punct">;</span>\n`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER COLLECTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderCollections(colsToRender) {
+  const resolveAlias = document.getElementById('resolveAliases').checked;
+  const useClamp     = document.getElementById('useClamp').checked;
+  let html='', totalVars=0;
+  for (const col of colsToRender) {
+    const vars = dedup(col.vars);
+    const displayName = stripCollectionNumber(col.name);
+    const bar='='.repeat(Math.max(displayName.length+8,52));
+    html+=`<span class="t-comment">// ${bar}\n// ${displayName}\n// ${bar}</span>\n\n`;
+    if(opts.format==='css') html+=`<span class="t-comment">:root {</span>\n`;
+    const allPairs={}, allConsumed=new Set();
+    if(useClamp && clampGroups.size>0){
+      for(const gName of clampGroups){
+        const {pairs,consumed}=buildClampPairsForGroup(vars,gName);
+        Object.assign(allPairs,pairs);
+        for(const n of consumed) allConsumed.add(n);
+      }
+    }
+    const groups=groupAndSort(vars);
+    for(let i=0;i<groups.length;i++){
+      const {groupName,vars:gVars}=groups[i];
+      const visible=gVars.filter(v=>!allConsumed.has(v.name));
+      if(!visible.length) continue;
+      if(groupName && visible.length>1){
+        const lbl=groupName.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        const ind=opts.format==='css'?'  ':'';
+        html+=`<span class="t-comment">${ind}// ${lbl}</span>\n`;
+      }
+      for(const v of gVars){
+        if(allConsumed.has(v.name)) continue;
+        if(allPairs[v.name]){
+          html+=renderClampVar(v.name,generateClampStr(allPairs[v.name].minPx,allPairs[v.name].maxPx));
+          totalVars++; continue;
+        }
+        const line=renderVar(v,resolveAlias,allConsumed);
+        if(line){html+=line; totalVars++;}
+      }
+      if(i<groups.length-1) html+='\n';
+    }
+    if(opts.format==='css') html+=`\n<span class="t-comment">}</span>\n`;
+    html+='\n';
+  }
+  return {html,totalVars};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER TEXT STYLES (mixins or classes)
+// ═══════════════════════════════════════════════════════════════════════════
+function styleToMixinName(style) {
+  return fixNameJS(style.name.replace(/\//g,'-'));
+}
+
+function formatPropValue(prop, propKey) {
+  if (prop.varName) {
+    return opts.format==='css' ? 'var(--'+prop.varName+')' : '$'+prop.varName;
+  }
+  if (prop.raw === null || prop.raw === undefined) return null;
+  if (propKey==='fontSize') return opts.unit==='px' ? Math.round(prop.raw)+'px' : parseFloat((prop.raw/16).toFixed(4))+'rem';
+  if (propKey==='lineHeight') {
+    if (prop.unit==='PERCENT') return parseFloat((prop.raw/100).toFixed(4)); // RECOVERY NOTE: Figma gives percent (150 = 150%); CSS wants a ratio (1.5)
+    return opts.unit==='px' ? Math.round(prop.raw)+'px' : parseFloat((prop.raw/16).toFixed(4))+'rem';
+  }
+  if (propKey==='letterSpacing') {
+    if (prop.unit==='PERCENT') return parseFloat((prop.raw/100).toFixed(4))+'em'; // RECOVERY NOTE: Figma gives percent (5 = 5%); CSS wants 0.05em
+    return opts.unit==='px' ? parseFloat(prop.raw.toFixed(2))+'px' : parseFloat((prop.raw/16).toFixed(4))+'rem';
+  }
+  if (propKey==='fontFamily') return prop.raw ? `"${prop.raw}"` : null;
+  return String(prop.raw);
+}
+
+const CSS_PROP_MAP = {
+  fontFamily:'font-family', fontSize:'font-size', fontWeight:'font-weight',
+  fontStyle:'font-style', lineHeight:'line-height', letterSpacing:'letter-spacing',
+  textTransform:'text-transform', textDecoration:'text-decoration',
+  fontVariant:'font-variant', paragraphSpacing:'--paragraph-spacing',
+  paragraphIndent:'text-indent',
+};
+const PROP_ORDER = ['fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing','textTransform','textDecoration','fontVariant','paragraphSpacing','paragraphIndent'];
+
+function renderMixins(styles, folderLabel) {
+  const useMixins  = document.getElementById('useMixins') && document.getElementById('useMixins').checked;
+  const useClamp   = document.getElementById('useClamp').checked;
+  const isCss      = opts.format==='css';
+  const useClass   = isCss || !useMixins;
+  const folder     = folderLabel || 'Text Styles';
+  const bar        = '='.repeat(Math.max(folder.length+16,52));
+  let html         = `<span class="t-comment">// ${bar}\n// Text Styles — ${folder}\n// ${bar}</span>\n\n`;
+
+  for (const s of styles) {
+    if (useClamp) {
+      const nm = s.styleName.toLowerCase().replace(/[^a-z]/g,'');
+      if (nm.endsWith('mobile')) continue;
+    }
+    const mixinName = styleToMixinName(s);
+    html += `<span class="t-comment">// ${s.name}</span>\n`;
+    if (useClass) {
+      html += `<span class="t-prop">.${mixinName}</span> <span class="t-punct">{</span>\n`;
+    } else {
+      html += `<span class="t-prop">@mixin ${mixinName}</span> <span class="t-punct">{</span>\n`;
+    }
+    for (const propKey of PROP_ORDER) {
+      const prop = s.props[propKey];
+      if (!prop) continue;
+      const cssName = CSS_PROP_MAP[propKey];
+      const val     = formatPropValue(prop, propKey);
+      if (val === null) continue;
+      const cls = prop.varName ? 't-val-ref' : (propKey==='fontFamily'?'t-val-num':'t-val-num');
+      html += `  <span class="t-prop">${cssName}</span><span class="t-punct">: </span><span class="${cls}">${val}</span><span class="t-punct">;</span>\n`;
+    }
+    html += `<span class="t-punct">}</span>\n\n`;
+  }
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER COLOR STYLES
+// ═══════════════════════════════════════════════════════════════════════════
+function renderColorStyles(styles, folderLabel) {
+  const isCss  = opts.format==='css';
+  const folder = folderLabel || 'Color Styles';
+  const bar    = '='.repeat(Math.max(folder.length+18,52));
+  const groups = groupAndSort(styles.map(st=>({name:fixNameJS(st.name.replace(/\//g,'-'))})));
+  const byName = {};
+  for (const st of styles) byName[fixNameJS(st.name.replace(/\//g,'-'))]=st;
+  let inner='';
+  for(let gi=0;gi<groups.length;gi++){
+    const {groupName,vars:gVars}=groups[gi];
+    if(groupName&&gVars.length>1){
+      const lbl=groupName.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      inner+=`<span class="t-comment">${isCss?'  ':''}// ${lbl}</span>\n`;
+    }
+    for(const gv of gVars){
+      const st=byName[gv.name]; if(!st) continue;
+      const varName=isCss?'--'+gv.name:'$'+gv.name;
+      const indent=isCss?'  ':'';
+      const values=st.paints.map(paint=>{
+        if(paint.type==='solid'){
+          if(paint.varName){
+            return {str:isCss?'var(--'+paint.varName+')':'$'+paint.varName,cls:'t-val-ref'};
+          }
+          return {str:opts.color==='rgba'?paint.rgba:cleanHex(paint.hex),cls:'t-val-hex'};
+        }
+        if(paint.type==='gradient'){
+          const stops=paint.stops.map(s=>{const c=opts.color==='rgba'?s.rgba:cleanHex(s.hex);return c+' '+s.position+'%';});
+          return {str:paint.gradType+'('+stops.join(', ')+')',cls:'t-val-num'};
+        }
+        if(paint.type==='image') return {str:'/* image fill */',cls:'t-comment'};
+        return null;
+      }).filter(Boolean);
+      if(!values.length) continue;
+      inner+=`<span class="t-prop">${indent}${varName}</span><span class="t-punct">: </span><span class="${values[0].cls}">${values[0].str}</span><span class="t-punct">;</span>\n`;
+      for(let i=1;i<values.length;i++) inner+=`<span class="t-comment">${indent}// layer ${i+1}: ${values[i].str}</span>\n`;
+    }
+    if(gi<groups.length-1) inner+='\n';
+  }
+  const header=`<span class="t-comment">// ${bar}\n// Color Styles — ${folder}\n// ${bar}</span>\n\n`;
+  if(isCss) return header+`<span class="t-comment">:root {</span>\n${inner}\n<span class="t-comment">}</span>\n\n`;
+  return header+inner+'\n';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER EFFECT STYLES
+// ═══════════════════════════════════════════════════════════════════════════
+function renderEffectStyles(styles, folderLabel) {
+  const isCss  = opts.format==='css';
+  const folder = folderLabel || 'Effect Styles';
+  const bar    = '='.repeat(Math.max(folder.length+19,52));
+  const groups = groupAndSort(styles.map(st=>({name:fixNameJS(st.name.replace(/\//g,'-'))})));
+  const byName = {};
+  for(const st of styles) byName[fixNameJS(st.name.replace(/\//g,'-'))]=st;
+  let inner='';
+  for(let gi=0;gi<groups.length;gi++){
+    const {groupName,vars:gVars}=groups[gi];
+    if(groupName&&gVars.length>1){
+      const lbl=groupName.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      inner+=`<span class="t-comment">${isCss?'  ':''}// ${lbl}</span>\n`;
+    }
+    for(const gv of gVars){
+      const st=byName[gv.name]; if(!st) continue;
+      const indent=isCss?'  ':'';
+      const base=gv.name;
+      const shadows=st.effects.filter(e=>e.type==='shadow');
+      const blurs=st.effects.filter(e=>e.type==='blur');
+      const bdrops=st.effects.filter(e=>e.type==='backdrop');
+      if(shadows.length){
+        const vn=isCss?'--'+base:'$'+base;
+        inner+=`<span class="t-prop">${indent}${vn}</span><span class="t-punct">: </span><span class="t-val-num">${shadows.map(e=>e.css).join(', ')}</span><span class="t-punct">;</span>\n`;
+      }
+      if(blurs.length){
+        const vn=isCss?'--'+base+'-filter':'$'+base+'-filter';
+        inner+=`<span class="t-prop">${indent}${vn}</span><span class="t-punct">: </span><span class="t-val-num">${blurs.map(e=>e.css).join(' ')}</span><span class="t-punct">;</span>\n`;
+      }
+      if(bdrops.length){
+        const vn=isCss?'--'+base+'-backdrop':'$'+base+'-backdrop';
+        inner+=`<span class="t-prop">${indent}${vn}</span><span class="t-punct">: </span><span class="t-val-num">${bdrops.map(e=>e.css).join(' ')}</span><span class="t-punct">;</span>\n`;
+      }
+    }
+    if(gi<groups.length-1) inner+='\n';
+  }
+  const header=`<span class="t-comment">// ${bar}\n// Effect Styles — ${folder}\n// ${bar}</span>\n\n`;
+  if(isCss) return header+`<span class="t-comment">:root {</span>\n${inner}\n<span class="t-comment">}</span>\n\n`;
+  return header+inner+'\n';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — main output function
+// ═══════════════════════════════════════════════════════════════════════════
+function render() {
+  if (!ready) return;
+  const ext        = opts.format==='scss'?'.scss':'.css';
+  let fullHtml     = '';
+  let totalVars    = 0;
+  let fileLabel    = '_variables'+ext;
+  let isAll        = false;
+
+  if (activeFolderType === null) {
+    // Collections mode
+    const cols = activeColId==='__all__' ? collections : collections.filter(c=>c.id===activeColId);
+    const colName = activeColId==='__all__' ? 'variables' : (collections.find(c=>c.id===activeColId)||{name:'variables'}).name;
+    fileLabel = activeColId==='__all__' ? 'base-variables'+ext : makeFileName(colName, ext);
+    if (cols.length) {
+      const {html,totalVars:tv} = renderCollections(cols);
+      // Only prepend file comment for All Collections — single collection is obvious
+      const fileComment = activeColId==='__all__' ? `<span class="t-comment">// ${fileLabel}</span>\n\n` : '';
+      fullHtml += fileComment + html;
+      totalVars = tv;
+    }
+    // Raw count matches sidebar (clamp reduces vars count misleadingly)
+    const rawTotal = cols.reduce((sum, c) => sum + dedup(c.vars).length, 0);
+    document.getElementById('varCount').textContent = `${rawTotal} variable${rawTotal!==1?'s':''}`;
+    document.getElementById('varCount').style.display = '';
+  } else {
+    // Styles mode
+    document.getElementById('varCount').style.display = 'none';
+    const data   = activeFolderType==='text' ? textStyles : activeFolderType==='color' ? colorStyles : effectStyles;
+    const allId  = '__all_'+activeFolderType+'__';
+    isAll  = activeFolder===allId;
+    const isCss  = opts.format==='css';
+    // Consistent file names: text-styles, color-styles, effect-styles
+    const typeFileName = activeFolderType+'-styles'+ext;
+
+    if (activeFolderType==='text') {
+      if(isAll){
+        fileLabel = typeFileName;
+        const foldersSeen = new Set();
+        const orderedFolders = [];
+        for(const st of data){
+          const top = st.folderPath ? st.folderPath.split('/')[0] : '';
+          if(!foldersSeen.has(top)){ foldersSeen.add(top); orderedFolders.push(top); }
+        }
+        for(const folder of orderedFolders){
+          const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(folder));
+          const label = folder || 'Text Styles';
+          if(sub.length) fullHtml+=renderMixins(sub, label);
+        }
+      } else {
+        fileLabel = makeFileName(activeFolder||'text-styles', ext);
+        const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(activeFolder||''));
+        if(sub.length) fullHtml+=renderMixins(sub, activeFolder||'Text Styles');
+      }
+    } else {
+      const folders = isAll
+        ? [...new Set(data.map(st=>st.folderPath?st.folderPath.split('/')[0]:''))]
+        : [activeFolder];
+      const renderFn = activeFolderType==='color' ? renderColorStyles : renderEffectStyles;
+      if(isAll){
+        fileLabel = typeFileName;
+        if(isCss && folders.length>1){
+          const allSub = folders.flatMap(f=>data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(f||'')));
+          const label  = activeFolderType==='color'?'Color Styles':'Effect Styles';
+          if(allSub.length) fullHtml+=renderFn(allSub,label);
+        } else {
+          for(const folder of folders){
+            const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(folder||''));
+            if(sub.length) fullHtml+=renderFn(sub,folder);
+          }
+        }
+      } else {
+        fileLabel = makeFileName(activeFolder||activeFolderType, ext);
+        const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(activeFolder||''));
+        if(sub.length) fullHtml+=renderFn(sub,activeFolder);
+      }
+    }
+  }
+
+  if (!fullHtml) {
+    document.getElementById('codeWrap').innerHTML='<div class="state-center"><div class="icon">⟨/⟩</div><p>Select a collection or style folder.</p></div>';
+    document.getElementById('fileBadge').textContent='base-variables'+ext;
+    return;
+  }
+  document.getElementById('fileBadge').textContent = fileLabel;
+  // Prepend file comment only for "All" views — single selections are self-evident
+  if (activeFolderType !== null && isAll && fullHtml) {
+    fullHtml = `<span class="t-comment">// ${fileLabel}</span>\n\n` + fullHtml;
+  }
+  document.getElementById('codeWrap').innerHTML=`<pre>${fullHtml}</pre>`;
+  // Show zip button only when "All" is active and there are multiple items to separate
+  const zipBtn = document.getElementById('downloadZipBtn');
+  if (zipBtn) {
+    const showZip = (activeFolderType === null && activeColId === '__all__' && collections.length > 1)
+      || (activeFolderType !== null && isAll);
+    zipBtn.style.display = showZip ? '' : 'none';
+  }
+  // Check for name clashes in current view
+  if (activeFolderType === null) {
+    const cols = activeColId==='__all__' ? collections : collections.filter(c=>c.id===activeColId);
+    const allVars = cols.flatMap(c => dedup(c.vars));
+    checkClashes(allVars);
+  } else {
+    document.getElementById('clashBanner') && document.getElementById('clashBanner').classList.remove('show');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLASH DETECTION
+// ═══════════════════════════════════════════════════════════════════════════
+function checkClashes(vars) {
+  const seen   = {};
+  const clashes = [];
+  for (const v of vars) {
+    if (seen[v.name]) {
+      if (!clashes.includes(v.name)) clashes.push(v.name);
+    } else {
+      seen[v.name] = true;
+    }
+  }
+  const banner = document.getElementById('clashBanner');
+  const list   = document.getElementById('clashList');
+  if (!banner || !list) return;
+  if (clashes.length) {
+    list.textContent = clashes.map(n => (opts.format==='css'?'--':'$') + n).join('  ·  ');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOAST + COPY
+// ═══════════════════════════════════════════════════════════════════════════
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg||'Copied to clipboard';
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function copyToClipboard(){
+  const pre=document.querySelector('#codeWrap pre');
+  if(!pre) return;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=pre.innerHTML.replace(/<br\s*\/?>/gi,'\n').replace(/<\/span>/gi,'').replace(/<span[^>]*>/gi,'');
+  const text=tmp.textContent||tmp.innerText||'';
+  if(!text.trim()) return;
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{document.execCommand('copy');showToast('Copied to clipboard');}
+    catch(e){showToast('Copy failed — use Cmd/Ctrl+A, Cmd/Ctrl+C');}
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard')).catch(fallback);
+  } else fallback();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOWNLOAD
+// ═══════════════════════════════════════════════════════════════════════════
+function renderToPlain(htmlStr){
+  const tmp=document.createElement('div');
+  tmp.innerHTML=`<pre>${htmlStr}</pre>`;
+  return tmp.innerText||tmp.textContent||'';
+}
+
+function downloadZip(){
+  if(!ready) return;
+  const ext=opts.format==='scss'?'.scss':'.css';
+
+  if(activeFolderType===null){
+    const files=collections.map(col=>{
+      const {html}=renderCollections([col]);
+      return {name:makeFileName(col.name,ext), content:renderToPlain(html)};
+    });
+    triggerDownloadBinary('few-variables.zip', buildZip(files), 'application/zip');
+  } else {
+    // All style folders → zip with one file per top-level folder
+    const data=activeFolderType==='text'?textStyles:activeFolderType==='color'?colorStyles:effectStyles;
+    const renderFn=activeFolderType==='text'?renderMixins:activeFolderType==='color'?renderColorStyles:renderEffectStyles;
+    const folders=[...new Set(data.map(st=>st.folderPath?st.folderPath.split('/')[0]:''))];
+    const files=[];
+    for(const folder of folders){
+      const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(folder));
+      if(!sub.length) continue;
+      const label=folder||activeFolderType;
+      files.push({name:makeFileName(label,ext), content:renderToPlain(renderFn(sub,label))});
+    }
+    const zipName='few-'+activeFolderType+'-styles.zip';
+    triggerDownloadBinary(zipName, buildZip(files), 'application/zip');
+  }
+
+  // Flash the zip button
+  const btn=document.getElementById('downloadZipBtn');
+  if(btn){
+    btn.classList.add('done');
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Downloaded`;
+    setTimeout(()=>{
+      btn.classList.remove('done');
+      btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download zip`;
+    },2000);
+  }
+}
+
+function downloadCurrent(){
+  if(!ready) return;
+  const ext=opts.format==='scss'?'.scss':'.css';
+
+  if(activeFolderType===null){
+    // Collections
+    const cols=activeColId==='__all__'?collections:collections.filter(c=>c.id===activeColId);
+    if(!cols.length) return;
+    if(activeColId==='__all__'){
+      const {html}=renderCollections(cols);
+      triggerDownload('base-variables'+ext, renderToPlain(html), 'text/plain');
+    } else {
+      const {html}=renderCollections(cols);
+      triggerDownload(makeFileName(cols[0].name,ext),renderToPlain(html),'text/plain');
+    }
+  } else {
+    // Style folders — always download as a single file
+    const data=activeFolderType==='text'?textStyles:activeFolderType==='color'?colorStyles:effectStyles;
+    const allId='__all_'+activeFolderType+'__';
+    const isAll=activeFolder===allId;
+    const renderFn=activeFolderType==='text'?renderMixins:activeFolderType==='color'?renderColorStyles:renderEffectStyles;
+    const typeLabel=activeFolderType==='color'?'Color Styles':activeFolderType==='effect'?'Effect Styles':'Text Styles';
+    const typeName=activeFolderType+'-styles'+ext; // e.g. text-styles.scss
+
+    if(isAll){
+      // All → single merged file with all styles
+      triggerDownload(typeName, renderToPlain(renderFn(data, typeLabel)), 'text/plain');
+    } else {
+      const sub=data.filter(st=>(st.folderPath?st.folderPath.split('/')[0]:'')===(activeFolder||''));
+      const label=activeFolder||typeLabel;
+      triggerDownload(makeFileName(label,ext), renderToPlain(renderFn(sub,label)), 'text/plain');
+    }
+  }
+  flashDownloadBtn();
+}
+
+function flashDownloadBtn(){
+  const btn=document.getElementById('downloadBtn');
+  btn.classList.add('done');
+  btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Downloaded`;
+  setTimeout(()=>{
+    btn.classList.remove('done');
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download`;
+  },2000);
+}
+
+function triggerDownload(name,text,mime){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=name; a.click();
+}
+function triggerDownloadBinary(name,bytes,mime){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([bytes],{type:mime})); a.download=name; a.click();
+}
+function buildZip(files){
+  const enc=new TextEncoder();
+  function u16(n){return[n&0xFF,(n>>8)&0xFF];}
+  function u32(n){return[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];}
+  function crc32(b){if(!crc32._t){crc32._t=new Uint32Array(256);for(let i=0;i<256;i++){let v=i;for(let j=0;j<8;j++)v=(v&1)?0xEDB88320^(v>>>1):v>>>1;crc32._t[i]=v;}}let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crc32._t[(c^b[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+  const now=new Date(),dd=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate(),dt=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  const locals=[],centrals=[];let offset=0;
+  for(const f of files){
+    const data=enc.encode(f.content),name=enc.encode(f.name),crc=crc32(data);
+    const local=[0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(0),...u16(dt),...u16(dd),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name,...data];
+    const central=[0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(0),...u16(dt),...u16(dd),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name];
+    locals.push(local);centrals.push(central);offset+=local.length;
+  }
+  const cds=centrals.reduce((s,c)=>s+c.length,0),eocd=[0x50,0x4B,0x05,0x06,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cds),...u32(offset),0,0];
+  return new Uint8Array([...locals.flat(),...centrals.flat(),...eocd]);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+loadPrefs();
 </script>
+
+</body>
+</html>

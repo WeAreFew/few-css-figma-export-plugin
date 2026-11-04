@@ -1,42 +1,54 @@
-# Few's Figma CSS Export Plugin
+# Few — Variables and Styles Exporter (recovered source)
 
-Below are the steps to get your plugin running. You can also find instructions at:
+Figma plugin that exports a file's variable collections and text/color/effect styles as SCSS or CSS
+(variables, `@mixin`/class text styles, `clamp()` for mobile/desktop pairs, rem/px, hex/rgba, zip download).
 
-<https://www.figma.com/plugin-docs/plugin-quickstart-guide/>
+Community listing: https://www.figma.com/community/plugin/1616864676074811900
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+## Files
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+| File | What it is |
+| --- | --- |
+| `manifest.json` | Plugin manifest. `id` matches the published listing, so updates go to the same plugin. |
+| `code.js` | Main-thread code (reads variables/styles from the file, posts them to the UI). |
+| `ui.html` | The plugin UI: markup, CSS, and all export/formatting logic. |
 
-<https://nodejs.org/en/download/>
+## Run it locally
 
-Next, install TypeScript using the command:
+1. Figma desktop app → **Plugins → Development → Import plugin from manifest…**
+2. Choose `manifest.json` from this folder.
+3. Run it from **Plugins → Development**. Edit files, then re-run to see changes.
 
-npm install -g typescript
+## Publish an update
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+Because `manifest.json` keeps the original `id`, publish from the Figma account that owns the listing:
+**Plugins → Manage plugins →** (your plugin) **→ Publish new version**.
 
-npm install --save-dev @figma/plugin-typings
+## Recovery notes — read before trusting this as the original
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+The original source was lost, so this is a rebuild:
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+- **`ui.html`** was recovered from the live plugin's DOM. The CSS and script are the original,
+  with Figma's injected wrapper code and runtime-rendered output removed. It is two small edits from verbatim:
+  - Line height from a percent value now divides by 100 (Figma `150%` → CSS `1.5`).
+  - Letter spacing from a percent value now divides by 100 (Figma `5%` → `0.05em`).
+  The recovered code divided letter spacing by 1000 and did not divide line height; both are marked
+  with `RECOVERY NOTE` comments. Revert them if your original behaviour was intentional.
+- **`code.js`** is reconstructed from the messages and data shapes `ui.html` uses (`refresh`, `resize`,
+  `setMode` in; one `variables` message out). It was tested against a mock Figma file, not a real one.
+  Run it side by side with the published plugin on a real file and diff the output.
+- **`manifest.json`** is inferred. The `dev`/`inspect` entries are a guess based on the UI's Dev Mode
+  styles, the network allow-list covers the Google Fonts the UI loads, and the name uses the UI's
+  `<title>` (the in-app modal showed "Few — Variables Exporter"). Adjust any of these if they differ
+  from what you published.
+- Small judgement calls in `code.js`: zero letter spacing is skipped, unbound paragraph spacing and
+  indent are emitted in `px`, and invisible fills/effects are ignored.
 
-For more information, visit <https://www.typescriptlang.org/>
+## Don't lose it again
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+```bash
+git init && git add . && git commit -m "Recovered Variables and Styles Exporter"
+```
 
-We recommend writing TypeScript code using Visual Studio code:
-
-1. Download Visual Studio Code if you haven't already: <https://code.visualstudio.com/>.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-   then select "npm: watch". You will have to do this again every time
-   you reopen Visual Studio Code.
-
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+Then push it to the Few GitHub org (there is a `WeAreFew/few-css-figma-export-plugin` repo
+that may be related).

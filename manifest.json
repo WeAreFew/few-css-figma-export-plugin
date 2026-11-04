@@ -1,14 +1,17 @@
 {
-  "name": "Few CSS Export",
-  "id": "1372948975730695845",
+  "name": "Few — Variables and Styles Exporter",
+  "id": "1616864676074811900",
   "api": "1.0.0",
   "main": "code.js",
-  "capabilities": ["inspect", "vscode"],
-  "enableProposedApi": false,
-  "documentAccess": "dynamic-page",
-  "editorType": ["dev"],
   "ui": "ui.html",
+  "editorType": ["figma", "dev"],
+  "capabilities": ["inspect"],
+  "documentAccess": "dynamic-page",
   "networkAccess": {
-    "allowedDomains": ["none"]
+    "allowedDomains": [
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
+    ],
+    "reasoning": "The plugin UI loads the JetBrains Mono and DM Sans web fonts from Google Fonts."
   }
 }
