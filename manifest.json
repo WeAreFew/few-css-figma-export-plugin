@@ -1,14 +1,11 @@
 {
-  "name": "Few CSS Export",
-  "id": "1372948975730695845",
+  "name": "Few — Variables and Styles Exporter",
+  "id": "1616864676074811900",
   "api": "1.0.0",
   "main": "code.js",
-  "capabilities": ["inspect", "vscode"],
-  "enableProposedApi": false,
-  "documentAccess": "dynamic-page",
-  "editorType": ["dev"],
   "ui": "ui.html",
-  "networkAccess": {
-    "allowedDomains": ["none"]
-  }
+  "editorType": ["figma", "dev"],
+	"capabilities": ["inspect"],
+  "permissions": ["currentuser"],
+	"documentAccess": "dynamic-page"
 }

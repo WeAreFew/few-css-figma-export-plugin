@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "es6",
-    "lib": ["esnext"],
-    "strict": true,
-    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"]
-  }
-}
