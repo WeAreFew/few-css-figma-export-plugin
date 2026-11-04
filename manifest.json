@@ -5,7 +5,13 @@
   "main": "code.js",
   "ui": "ui.html",
   "editorType": ["figma", "dev"],
-	"capabilities": ["inspect"],
-  "permissions": ["currentuser"],
-	"documentAccess": "dynamic-page"
+  "capabilities": ["inspect"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
+    ],
+    "reasoning": "The plugin UI loads the JetBrains Mono and DM Sans web fonts from Google Fonts."
+  }
 }

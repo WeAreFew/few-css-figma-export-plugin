@@ -1,89 +1,54 @@
-# Few — Variables and Styles Exporter
+# Few — Variables and Styles Exporter (recovered source)
 
-A Figma plugin by [Few](https://few.studio). Export your native Figma variable collections and styles to clean, grouped SCSS or CSS — with fluid `clamp()` typography, text style mixins, color styles, and effect styles.
+Figma plugin that exports a file's variable collections and text/color/effect styles as SCSS or CSS
+(variables, `@mixin`/class text styles, `clamp()` for mobile/desktop pairs, rem/px, hex/rgba, zip download).
 
-## Installation
+Community listing: https://www.figma.com/community/plugin/1616864676074811900
 
-### From Figma Community
-Search for **"Few — Variables and Styles Exporter"** in the Figma Community plugins tab.
+## Files
 
-### Development
-1. Clone or download this repo
-2. In Figma desktop: **Main Menu → Plugins → Development → Import plugin from manifest…**
-3. Select `manifest.json`
-4. Run via **Plugins → Development → Few — Variables and Styles Exporter**
+| File | What it is |
+| --- | --- |
+| `manifest.json` | Plugin manifest. `id` matches the published listing, so updates go to the same plugin. |
+| `code.js` | Main-thread code (reads variables/styles from the file, posts them to the UI). |
+| `ui.html` | The plugin UI: markup, CSS, and all export/formatting logic. |
 
-> **Note:** The `id` field in `manifest.json` must be replaced with your own plugin ID from the Figma developer dashboard before publishing.
+## Run it locally
 
-## Features
+1. Figma desktop app → **Plugins → Development → Import plugin from manifest…**
+2. Choose `manifest.json` from this folder.
+3. Run it from **Plugins → Development**. Edit files, then re-run to see changes.
 
-**Variables**
-- Reads all local Figma native variable collections
-- Groups variables by shared prefix with `// comment` headers
-- Numeric scales sorted correctly (50 before 100)
-- Alias resolution — keep `$references` or resolve to raw values
-- Unitless output for opacity/alpha (as `%`), z-index, and similar
-- Multi-mode support — switch between light/dark or other modes
-- Clash detection — warns when two variables share the same export name
+## Publish an update
 
-**Fluid typography**
-- `clamp()` generation pairs `h1` + `h1-mobile` into a single fluid expression
-- Choose which groups use clamp, with configurable min/max viewports
+Because `manifest.json` keeps the original `id`, publish from the Figma account that owns the listing:
+**Plugins → Manage plugins →** (your plugin) **→ Publish new version**.
 
-**Text Styles**
-- Exports as `@mixin` (SCSS) or `.class` selectors (CSS/toggle off)
-- References your variable names where styles are bound to variables
-- Includes font-family, size, weight, style, line-height, letter-spacing, text-transform, text-decoration, paragraph spacing
+## Recovery notes — read before trusting this as the original
 
-**Color Styles**
-- Solid fills, gradients, image fills
-- References variable names when bound
-- Single `:root {}` block for CSS
+The original source was lost, so this is a rebuild:
 
-**Effect Styles**
-- Box shadows, filters, backdrop filters as `$variables` or `--custom-properties`
+- **`ui.html`** was recovered from the live plugin's DOM. The CSS and script are the original,
+  with Figma's injected wrapper code and runtime-rendered output removed. It is two small edits from verbatim:
+  - Line height from a percent value now divides by 100 (Figma `150%` → CSS `1.5`).
+  - Letter spacing from a percent value now divides by 100 (Figma `5%` → `0.05em`).
+  The recovered code divided letter spacing by 1000 and did not divide line height; both are marked
+  with `RECOVERY NOTE` comments. Revert them if your original behaviour was intentional.
+- **`code.js`** is reconstructed from the messages and data shapes `ui.html` uses (`refresh`, `resize`,
+  `setMode` in; one `variables` message out). It was tested against a mock Figma file, not a real one.
+  Run it side by side with the published plugin on a real file and diff the output.
+- **`manifest.json`** is inferred. The `dev`/`inspect` entries are a guess based on the UI's Dev Mode
+  styles, the network allow-list covers the Google Fonts the UI loads, and the name uses the UI's
+  `<title>` (the in-app modal showed "Few — Variables Exporter"). Adjust any of these if they differ
+  from what you published.
+- Small judgement calls in `code.js`: zero letter spacing is skipped, unbound paragraph spacing and
+  indent are emitted in `px`, and invisible fills/effects are ignored.
 
-**Export**
-- SCSS or CSS format
-- rem or px units (16px base)
-- Hex or rgba color format
-- Download single file or zip of all separate files
-- One-click copy to clipboard
+## Don't lose it again
 
-## Output example
-
-```scss
-// base-variables.scss
-
-// ====================================================
-// Primitives
-// ====================================================
-
-// Size
-$size-0: 0rem;
-$size-4: 0.25rem;
-$size-8: 0.5rem;
-
-// ====================================================
-// Typography
-// ====================================================
-
-// Font Size Heading
-$font-size-heading-h1: clamp(3rem, 3.43vw + 0.57rem, 4.5rem);
-$font-size-heading-h2: clamp(2.5rem, 2.86vw + 0.36rem, 4rem);
+```bash
+git init && git add . && git commit -m "Recovered Variables and Styles Exporter"
 ```
 
-## File Structure
-
-```
-few-variables-exporter/
-├── manifest.json   Figma plugin config
-├── code.js         Plugin backend (Figma sandbox)
-├── ui.html         Plugin UI
-├── icon.png        Plugin icon (128×128)
-└── README.md
-```
-
-## Privacy
-
-This plugin reads only your local Figma file's variables and styles. No data is sent to any server. Everything runs locally in the Figma sandbox.
+Then push it to the Few GitHub org (there is a `WeAreFew/few-css-figma-export-plugin` repo
+that may be related).
